@@ -52,6 +52,7 @@ class Bnr2X extends State<Bnr2> {
         child: Image.asset(
           "assets/bnr.png",
           fit: BoxFit.scaleDown,
+          height: 300,
         ),
       ),
       const Spacer(),

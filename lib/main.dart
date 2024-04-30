@@ -1,9 +1,23 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
+import 'package:cinemagicx/firstp.dart';
 import 'package:cinemagicx/xman.dart';
 import 'package:flutter/material.dart';
+import 'package:cinemagicx/videox.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:chewie/chewie.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  MobileAds.instance.initialize();
+
   // runApp(DevicePreview(
   //   enabled: true,
   //   builder: (context) {
@@ -11,15 +25,16 @@ void main() {
   //   },
   // ));
 
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp();
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final fgj = Uri.parse("http://x.com");
     return MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(
@@ -30,41 +45,103 @@ class MyApp extends StatelessWidget {
               background: const Color(0xff071427)),
           useMaterial3: true,
         ),
+        // home: HomePage());
 
         // home: const MyHomePage(title: 'Flutter Demo Home Page'),
 
-        home: Xman());
+        // home: MySpalash());
+        home: VideoX(
+          idx: "65fc62a2df0c3449462877a0",
+        ));
+
+    // home: DloadPrgs(
+    //   u: fgj,
+    // )
+
+    // );
   }
 }
 
-class Examplex extends StatefulWidget {
-  const Examplex({super.key});
+class NotificationDemo extends StatelessWidget {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
-  State<Examplex> createState() => ExamplexX();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Notification Demo'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () async {
+            await _initializeNotifications(flutterLocalNotificationsPlugin);
+            await _scheduleNotification(flutterLocalNotificationsPlugin);
+          },
+          child: Text('Schedule Notification'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _initializeNotifications(
+      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  final ranx = Random();
+
+  Future<void> _scheduleNotification(
+      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
+    AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'lol${ranx.nextInt(100)}', // Change this value for different channels
+      'your_channel_name ${ranx.nextInt(100)}', // Change this value for different channels
+      // Change this value for different channels
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+      0, // Notification ID
+      'Title', // Notification title
+      'Body', // Notification body
+
+      platformChannelSpecifics,
+      payload: 'item x',
+    );
+  }
 }
 
-class ExamplexX extends State<Examplex> {
-  ChewieController? _controllerx;
-  late Widget ty;
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
 
-  bool st = false;
-  Future<void> fth() async {
-    final _controller = VideoPlayerController.networkUrl(
-      Uri.parse(
-          'https://dacastmmod-mmd-cust.lldns.net/127--1708088887--1708089007--692e9c05dab4a7caf2f7b149ab11463b/e5/7b127d5f-3b75-4c9c-ae84-7d7ddbd9c832/c22e8dc9-547c-47bd-8fba-eaaebc5ddb21/stream.ismd/manifest.m3u8?stream=a488aa56-1148-3f3e-f894-07267faa49a5_rendition%3B5fe1b2aa-8e27-6bee-14a6-b7e31ff540ee_rendition%3B092a7135-bf22-dfce-d960-be220d8ff73e_rendition'),
-    );
+class _HomePageState extends State<HomePage> {
+  List<String> videoUrls = [];
 
-    await _controller.initialize();
+  String fgh = "";
 
-    _controllerx = ChewieController(
-        videoPlayerController: _controller,
-        aspectRatio: _controller.value.aspectRatio,
-        looping: true,
-        customControls: CupertinoControls(
-          backgroundColor: Colors.black12,
-          iconColor: Colors.white,
-        ));
+  String pat = "";
+
+  SharedPreferences? prefs;
+
+  Future<void> rtx() async {
+    Directory appDir = await getApplicationDocumentsDirectory();
+
+    pat = appDir.path;
+
+    print(pat);
+
+    prefs = await SharedPreferences.getInstance();
 
     setState(() {});
   }
@@ -72,44 +149,65 @@ class ExamplexX extends State<Examplex> {
   @override
   void initState() {
     // TODO: implement initState
+    rtx();
+
     super.initState();
-    fth();
-
-    // _controller.addListener(() {
-    //   setState(() {});
-    // });
-    // _controller.setLooping(true);
-    // _controller.
-
-    // _controller.play();
-    // setState(() {
-    //   _controller = VideoPlayerController.networkUrl(Uri.parse(
-    //       "https://dacastmmod-mmd-cust.lldns.net/127--1707845332--1707845452--11202a2d6c150c4d58afa4cb536e0cf2/e5/7b127d5f-3b75-4c9c-ae84-7d7ddbd9c832/5bda7af1-b37e-424e-a1a7-3a0c013983c2/stream.ismd/manifest.m3u8?stream=2bb303f5-dac2-1c00-24e4-9449893b521f_rendition%3B87681312-6924-2316-add8-d7c66315fef9_rendition%3B8ca0a648-039c-c32c-70e1-5f02a26cd797_rendition"));
-    // });
   }
 
   @override
   Widget build(BuildContext context) {
-    final fpx = MediaQuery.of(context).size.height;
-    return Scaffold(
-        body: SafeArea(
-      child: Column(children: [
-        Container(
-            color: Colors.black,
-            height: fpx * .3,
-            child: Chewie(
-              controller: _controllerx!,
-            )),
-      ]),
-    ));
-  }
+    final double widthx = MediaQuery.of(context).size.width;
 
-  @override
-  void dispose() {
-    super.dispose();
-    _controllerx!.dispose();
+    return Text("data");
   }
 }
+
+
+
+
+
+
+
+
+
+// class Examplex extends StatefulWidget {
+//   const Examplex({super.key});
+
+//   @override
+//   State<Examplex> createState() => ExamplexX();
+// }
+
+// class ExamplexX extends State<Examplex> {
+//   int star = 5;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     double screenSize = MediaQuery.of(context).size.width;
+
+//     return Scaffold(
+//       body: Column(
+//         // mainAxisAlignment: MainAxisAlignment.start,
+//         children: [
+//           FilledButton(
+//               onPressed: () {
+//                 showDialog(
+//                   context: context,
+//                   builder: (BuildContext context) {
+//                     return ReviewPagePopup();
+//                   },
+//                 );
+//               },
+//               child: Text("lol"))
+//         ],
+//       ),
+//     );
+//   }
+
+//   @override
+//   void dispose() {
+//     super.dispose();
+//   }
+// }
 
 //   final channel = IOWebSocketChannel.connect('ws://127.0.0.1:5000');
 //   final List<String> rtx = ["n"];
@@ -332,5 +430,3 @@ class ExamplexX extends State<Examplex> {
 //     );
 //   }
 // }
-
-

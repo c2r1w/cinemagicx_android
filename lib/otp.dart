@@ -3,11 +3,13 @@ import 'dart:convert';
 
 import 'package:cinemagicx/raju.dart';
 import 'package:cinemagicx/signup.dart';
+import 'package:cinemagicx/xman.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
 
 import 'package:pinput/pinput.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyOtp extends StatefulWidget {
   String num;
@@ -47,12 +49,17 @@ class _MyOtpState extends State<MyOtp> {
     // }
 
     Timer.periodic(const Duration(seconds: 3), (timmer) async {
+      final prefh = await SharedPreferences.getInstance();
+
+      await prefh.setBool("islogin", true);
+
+      print(prefh.getBool("islogin"));
       setState(() {
         timmer.cancel();
 
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) {
-          return MySignUp();
+          return Xman();
         }));
       });
     });

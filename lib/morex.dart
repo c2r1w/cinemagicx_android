@@ -1,15 +1,29 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cinemagicx/dlist.dart';
 import 'package:cinemagicx/raju.dart';
+import 'package:cinemagicx/searc.dart';
+import 'package:cinemagicx/signup.dart';
+import 'package:cinemagicx/videox.dart';
+import 'package:cinemagicx/watchltr.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class MoreX extends StatefulWidget {
   final String catid;
+  final AdSize adSize = AdSize.fullBanner;
 
-  const MoreX({super.key, required this.catid});
+  final String adUnitId = Platform.isAndroid
+      // Use this ad unit on Android...
+      ? 'ca-app-pub-3940256099942544/6300978111'
+      // ... or this one on iOS.
+      : 'ca-app-pub-3940256099942544/2934735716';
+
+  MoreX({super.key, required this.catid});
 
   @override
   State<MoreX> createState() => MoreXX();
@@ -17,17 +31,11 @@ class MoreX extends StatefulWidget {
 
 // 005EEA border 0381E9 btn
 
-class MoreXX extends State<MoreX> {
+class MoreXX extends State<MoreX> with TickerProviderStateMixin {
   int expandedTileIndex = -1;
-
+  List<Widget> rajux = [];
+  BannerAd? _bannerAd;
   Map<String, dynamic> data = {};
-  List<Widget> dataz = [];
-
-  Future<void> _launchUrl(String _url) async {
-    if (!await launchUrl(Uri.parse(_url))) {
-      throw Exception('Could not launch $_url');
-    }
-  }
 
   Future<void> featchdata() async {
     try {
@@ -38,10 +46,9 @@ class MoreXX extends State<MoreX> {
       );
       final datax = jsonDecode(response.body);
 
-      final xdat = jsonDecode(datax["data"]);
-      List<Widget> rajux = [];
+      data = jsonDecode(datax["data"]);
 
-      xdat.forEach((key, value) {
+      data.forEach((key, value) {
         final dtx = key.split("|");
 
         if (dtx.first == "ADS") {
@@ -52,7 +59,7 @@ class MoreXX extends State<MoreX> {
                   _launchUrl(value["link"]);
                 },
                 child: FadeInImage.assetNetwork(
-                  placeholder: "assets/logo.png",
+                  placeholder: "assets/loader.gif",
                   image: "${imgUrl + value["dp"]}",
                   fit: BoxFit.scaleDown,
                   height: double.parse(
@@ -66,25 +73,35 @@ class MoreXX extends State<MoreX> {
                   _launchUrl(value["link"]);
                 },
                 child: FadeInImage.assetNetwork(
-                  placeholder: "assets/logo.png",
+                  placeholder: "assets/loader.gif",
                   image: "${imgUrl + value["dp"]}",
                 ),
               ));
             }
           } else {
             rajux.add(FadeInImage.assetNetwork(
-                placeholder: "assets/logo.png",
+                placeholder: "assets/loader.gif",
                 image: "${imgUrl + value["dp"]}"));
           }
         } else if (dtx.first == "SLIDER") {
           List<Widget> imglist = List.generate(
               value.length,
-              (indexxx) => ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: FadeInImage.assetNetwork(
-                      placeholder: "assets/logo.png",
-                      image: "${imgUrl + value[indexxx]["BNR"]}",
-                      fit: BoxFit.scaleDown,
+              (indexxx) => InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                VideoX(idx: value[indexxx]["_id"]),
+                          ));
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: FadeInImage.assetNetwork(
+                        placeholder: "assets/loader.gif",
+                        image: "${imgUrl + value[indexxx]["BNR"]}",
+                        fit: BoxFit.scaleDown,
+                      ),
                     ),
                   ));
 
@@ -98,93 +115,688 @@ class MoreXX extends State<MoreX> {
                   enlargeCenterPage: true),
             ),
           ));
-        } else {
-          final items = value;
-
-          rajux.add(Column(children: [
-            for (int i = 0; i < (items.length / 3).ceil(); i++)
-              SizedBox(
-                height: 110,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (int j = i * 3;
-                        j < (i * 3) + 3 && j < items.length;
-                        j++)
-                      Expanded(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: FadeInImage.assetNetwork(
-                                placeholder: "assets/logo.png",
-                                image: "${imgUrl + value[j]["BNR"]}",
-                                height: 100,
-                                placeholderFit: BoxFit.scaleDown,
-                                fit: BoxFit.scaleDown,
-                              ),
+        } else if (dtx.first == "Categoryx") {
+          rajux.add(SizedBox(
+            height: 150,
+            child: ListView.builder(
+              itemCount: value.length,
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, indext) {
+                return Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MoreX(
+                              catid: value[indext]["_id"],
                             ),
-                          ),
-                        ),
+                          ));
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FadeInImage.assetNetwork(
+                        placeholder: "assets/loader.gif",
+                        image: "${imgUrl + value[indext]["dp"]}",
+                        height: 100,
+                        fit: BoxFit.scaleDown,
                       ),
-                  ],
-                ),
-              )
-          ]));
+                    ),
+                  ),
+                );
+              },
+            ),
+          ));
+
+          rajux.add(Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                dtx[1],
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.normal),
+              ),
+            ),
+          ));
+        } else {
+          rajux.add(SizedBox(
+            height: 10,
+          ));
+          rajux.add(Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "  ${dtx.first}",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.normal),
+              ),
+              if (dtx.length > 1 && dtx.last != "null")
+                FilledButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MoreX(
+                              catid: dtx.last,
+                            ),
+                          ));
+                    },
+                    style: ButtonStyle(
+                        side: MaterialStatePropertyAll(
+                            BorderSide(color: Colors.white)),
+                        backgroundColor:
+                            MaterialStatePropertyAll(Colors.transparent)),
+                    child: Text(
+                      "More",
+                      style: TextStyle(fontSize: 13),
+                    )),
+            ],
+          ));
+
+          rajux.add(Container(
+            // color: Colors.white,
+            height: 100,
+            child: ListView.builder(
+              itemCount: value.length,
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, indext) {
+                return Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                VideoX(idx: value[indext]["_id"]),
+                          ));
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FadeInImage.assetNetwork(
+                        placeholder: "assets/loader.gif",
+                        image: "${imgUrl + value[indext]["BNR"]}",
+                        height: 100,
+                        fit: BoxFit.scaleDown,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ));
         }
       });
 
       setState(() {
-        dataz = rajux;
+        //
+
+        // tabController = TabController(length: data.length, vsync: this);
       });
     } catch (e) {
       print(e);
     }
   }
 
+  late TabController tabController;
+
+  Future<void> _launchUrl(String _url) async {
+    if (!await launchUrl(Uri.parse(_url))) {
+      throw Exception('Could not launch $_url');
+    }
+  }
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
     featchdata();
+
+    tabController = TabController(length: 0, vsync: this);
+    _loadAd();
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 80,
+      appBar: AppBar(
+          leadingWidth: 0,
+          leading: SizedBox(),
+          foregroundColor: Colors.white,
           backgroundColor: Colors.transparent,
           centerTitle: false,
           actions: [
+            IconButton(
+              onPressed: () async {
+                // await showModalBottomSheet(
+                //     backgroundColor: Color(0xff071427),
+                //     context: context,
+                //     builder: (context) => pPadding(
+                //           padding: const EdgeInsets.only(
+                //               top: 15, left: 10, right: 10),
+                //           child: XSearch(),
+                //         ));
+
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => XSearch(),
+                    ));
+              },
+              icon: Icon(
+                Icons.search,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
             Icon(
               Icons.emoji_events,
               color: Colors.white,
               size: 40,
             ),
-            Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 40,
-            ),
-          ],
-          leadingWidth: 0,
-          title: Align(
-            alignment: Alignment.topLeft,
-            child: Image.asset(
-              "assets/logo.png",
-              height: 50,
-            ),
-          ),
-        ),
-        body: dataz.length < 1
-            ? Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Column(
-                  children: dataz,
+            MenuAnchor(
+              menuChildren: [
+                MenuItemButton(
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => MySignUp()));
+                    },
+                    child: Text("Profile")),
+                MenuItemButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => DownloadedPage()));
+                    },
+                    child: Text("Download List")),
+                MenuItemButton(
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => Vatchlist()));
+                    },
+                    child: Text("Watch Later")),
+              ],
+              builder: (context, controller, child) => IconButton(
+                onPressed: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+                icon: Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 40,
                 ),
-              ));
+              ),
+            )
+          ],
+          title: Image.asset(
+            "assets/logo.png",
+            height: 50,
+          )),
+      bottomNavigationBar: Container(
+        width: screenSize.width,
+        height: widget.adSize.height.toDouble(),
+        child: _bannerAd == null
+            // Nothing to render yet.
+            ? SizedBox()
+            // The actual ad.
+            : Center(child: AdWidget(ad: _bannerAd!)),
+      ),
+      body: SingleChildScrollView(child: Column(children: rajux)),
+    );
+
+    // bottomNavigationBar: Container(
+    //   width: screenSize.width,
+    //   height: widget.adSize.height.toDouble(),
+    //   child: _bannerAd == null
+    //       // Nothing to render yet.
+    //       ? SizedBox()
+    //       // The actual ad.
+    //       : Center(child: AdWidget(ad: _bannerAd!)),
+    // ),
+    // body: Column(
+    //     children: List.generate(tabController.length, (index) {
+    //   Map<String, dynamic> xdat = jsonDecode(data[index]["data"]);
+
+    //   List<Widget> rajux = [];
+
+    //   xdat.forEach((key, value) {
+    //     final dtx = key.split("|");
+
+    //     if (dtx.first == "ADS") {
+    //       if (value["link"].length > 4) {
+    //         if (value["height"].length > 1) {
+    //           rajux.add(InkWell(
+    //             onTap: () {
+    //               _launchUrl(value["link"]);
+    //             },
+    //             child: FadeInImage.assetNetwork(
+    //               placeholder: "assets/loader.gif",
+    //               image: "${imgUrl + value["dp"]}",
+    //               fit: BoxFit.scaleDown,
+    //               height: double.parse(
+    //                 value["height"],
+    //               ),
+    //             ),
+    //           ));
+    //         } else {
+    //           rajux.add(InkWell(
+    //             onTap: () {
+    //               _launchUrl(value["link"]);
+    //             },
+    //             child: FadeInImage.assetNetwork(
+    //               placeholder: "assets/loader.gif",
+    //               image: "${imgUrl + value["dp"]}",
+    //             ),
+    //           ));
+    //         }
+    //       } else {
+    //         rajux.add(FadeInImage.assetNetwork(
+    //             placeholder: "assets/loader.gif",
+    //             image: "${imgUrl + value["dp"]}"));
+    //       }
+    //     } else if (dtx.first == "SLIDER") {
+    //       List<Widget> imglist = List.generate(
+    //           value.length,
+    //           (indexxx) => InkWell(
+    //                 onTap: () {
+    //                   Navigator.push(
+    //                       context,
+    //                       MaterialPageRoute(
+    //                         builder: (context) =>
+    //                             VideoX(idx: value[indexxx]["_id"]),
+    //                       ));
+    //                 },
+    //                 child: ClipRRect(
+    //                   borderRadius: BorderRadius.circular(10),
+    //                   child: FadeInImage.assetNetwork(
+    //                     placeholder: "assets/loader.gif",
+    //                     image: "${imgUrl + value[indexxx]["BNR"]}",
+    //                     fit: BoxFit.scaleDown,
+    //                   ),
+    //                 ),
+    //               ));
+
+    //       rajux.add(Container(
+    //         child: CarouselSlider(
+    //           items: imglist,
+    //           options: CarouselOptions(
+    //               autoPlay: true,
+    //               enlargeStrategy: CenterPageEnlargeStrategy.zoom,
+    //               viewportFraction: .8,
+    //               enlargeCenterPage: true),
+    //         ),
+    //       ));
+    //     } else if (dtx.first == "Categoryx") {
+    //       rajux.add(SizedBox(
+    //         height: 150,
+    //         child: ListView.builder(
+    //           itemCount: value.length,
+    //           scrollDirection: Axis.horizontal,
+    //           itemBuilder: (context, indext) {
+    //             return Padding(
+    //               padding: const EdgeInsets.all(5.0),
+    //               child: InkWell(
+    //                 onTap: () {
+    //                   Navigator.push(
+    //                       context,
+    //                       MaterialPageRoute(
+    //                         builder: (context) => MoreX(
+    //                           catid: value[indext]["_id"],
+    //                         ),
+    //                       ));
+    //                 },
+    //                 child: ClipRRect(
+    //                   borderRadius: BorderRadius.circular(8),
+    //                   child: FadeInImage.assetNetwork(
+    //                     placeholder: "assets/loader.gif",
+    //                     image: "${imgUrl + value[indext]["dp"]}",
+    //                     height: 100,
+    //                     fit: BoxFit.scaleDown,
+    //                   ),
+    //                 ),
+    //               ),
+    //             );
+    //           },
+    //         ),
+    //       ));
+
+    //       rajux.add(Align(
+    //         alignment: Alignment.topLeft,
+    //         child: Text(
+    //           dtx[1],
+    //           style: TextStyle(fontSize: 13, fontWeight: FontWeight.normal),
+    //         ),
+    //       ));
+    //     } else {
+    //       rajux.add(Container(
+    //         // color: Colors.white,
+    //         height: 150,
+    //         child: ListView.builder(
+    //           itemCount: value.length,
+    //           scrollDirection: Axis.horizontal,
+    //           itemBuilder: (context, indext) {
+    //             return Padding(
+    //               padding: const EdgeInsets.all(5.0),
+    //               child: InkWell(
+    //                 onTap: () {
+    //                   Navigator.push(
+    //                       context,
+    //                       MaterialPageRoute(
+    //                         builder: (context) =>
+    //                             VideoX(idx: value[indext]["_id"]),
+    //                       ));
+    //                 },
+    //                 child: ClipRRect(
+    //                   borderRadius: BorderRadius.circular(8),
+    //                   child: FadeInImage.assetNetwork(
+    //                     placeholder: "assets/loader.gif",
+    //                     image: "${imgUrl + value[indext]["APP"]}",
+    //                     height: 100,
+    //                     fit: BoxFit.scaleDown,
+    //                   ),
+    //                 ),
+    //               ),
+    //             );
+    //           },
+    //         ),
+    //       ));
+
+    //       rajux.add(Row(
+    //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //         children: [
+    //           Text(
+    //             "${dtx.first}",
+    //             style:
+    //                 TextStyle(fontSize: 13, fontWeight: FontWeight.normal),
+    //           ),
+    //           if (dtx.length > 1 && dtx.last != "null")
+    //             FilledButton(
+    //                 onPressed: () {
+    //                   Navigator.push(
+    //                       context,
+    //                       MaterialPageRoute(
+    //                         builder: (context) => MoreX(
+    //                           catid: dtx.last,
+    //                         ),
+    //                       ));
+    //                 },
+    //                 style: ButtonStyle(
+    //                     side: MaterialStatePropertyAll(
+    //                         BorderSide(color: Colors.white)),
+    //                     backgroundColor:
+    //                         MaterialStatePropertyAll(Colors.transparent)),
+    //                 child: Text(
+    //                   "More",
+    //                   style: TextStyle(fontSize: 13),
+    //                 )),
+    //         ],
+    //       ));
+    //       rajux.add(SizedBox(
+    //         height: 10,
+    //       ));
+    //     }
+    //   });
+
+    //   return SingleChildScrollView(
+    //       child: Column(children: rajux.reversed.toList()));
+    // })));
+  }
+
+  void _loadAd() {
+    final bannerAd = BannerAd(
+      size: widget.adSize,
+      adUnitId: widget.adUnitId,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        // Called when an ad is successfully received.
+        onAdLoaded: (ad) {
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _bannerAd = ad as BannerAd;
+          });
+        },
+        // Called when an ad request failed.
+        onAdFailedToLoad: (ad, error) {
+          print("ttyyy$error");
+          debugPrint('BannerAd failed to load: $error');
+          ad.dispose();
+        },
+      ),
+    );
+
+    // Start loading.
+    bannerAd.load();
   }
 }
+
+
+//   int expandedTileIndex = -1;
+
+//   Map<String, dynamic> data = {};
+//   List<Widget> dataz = [];
+
+//   Future<void> _launchUrl(String _url) async {
+//     if (!await launchUrl(Uri.parse(_url))) {
+//       throw Exception('Could not launch $_url');
+//     }
+//   }
+
+//   Future<void> featchdata() async {
+//     try {
+//       var response = await http.get(
+//         Uri.parse(
+//             '$backendurl/more?direct=true&limit=1000&on=_id&search=${widget.catid}'),
+//         headers: {"Content-Type": "application/json"},
+//       );
+//       final datax = jsonDecode(response.body);
+
+//       final xdat = jsonDecode(datax["data"]);
+//       List<Widget> rajux = [];
+
+//       xdat.forEach((key, value) {
+//         final dtx = key.split("|");
+
+//         if (dtx.first == "ADS") {
+//           if (value["link"].length > 4) {
+//             if (value["height"].length > 1) {
+//               rajux.add(InkWell(
+//                 onTap: () {
+//                   _launchUrl(value["link"]);
+//                 },
+//                 child: FadeInImage.assetNetwork(
+//                   placeholder: "assets/logo.png",
+//                   image: "${imgUrl + value["dp"]}",
+//                   fit: BoxFit.scaleDown,
+//                   height: double.parse(
+//                     value["height"],
+//                   ),
+//                 ),
+//               ));
+//             } else {
+//               rajux.add(InkWell(
+//                 onTap: () {
+//                   _launchUrl(value["link"]);
+//                 },
+//                 child: FadeInImage.assetNetwork(
+//                   placeholder: "assets/logo.png",
+//                   image: "${imgUrl + value["dp"]}",
+//                 ),
+//               ));
+//             }
+//           } else {
+//             rajux.add(FadeInImage.assetNetwork(
+//                 placeholder: "assets/logo.png",
+//                 image: "${imgUrl + value["dp"]}"));
+//           }
+//         } else if (dtx.first == "SLIDER") {
+//           List<Widget> imglist = List.generate(
+//               value.length,
+//               (indexxx) => InkWell(
+//                     onTap: () {
+//                       Navigator.push(
+//                           context,
+//                           MaterialPageRoute(
+//                             builder: (context) =>
+//                                 VideoX(idx: value[indexxx]["_id"]),
+//                           ));
+//                     },
+//                     child: ClipRRect(
+//                       borderRadius: BorderRadius.circular(10),
+//                       child: FadeInImage.assetNetwork(
+//                         placeholder: "assets/logo.png",
+//                         image: "${imgUrl + value[indexxx]["BNR"]}",
+//                         fit: BoxFit.scaleDown,
+//                       ),
+//                     ),
+//                   ));
+
+//           rajux.add(Container(
+//             child: CarouselSlider(
+//               items: imglist,
+//               options: CarouselOptions(
+//                   autoPlay: true,
+//                   enlargeStrategy: CenterPageEnlargeStrategy.zoom,
+//                   viewportFraction: .8,
+//                   enlargeCenterPage: true),
+//             ),
+//           ));
+//         } else {
+//           final items = value;
+
+//           rajux.add(Column(children: [
+//             for (int i = 0; i < (items.length / 3).ceil(); i++)
+//               SizedBox(
+//                 height: 110,
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     for (int j = i * 3;
+//                         j < (i * 3) + 3 && j < items.length;
+//                         j++)
+//                       Expanded(
+//                         child: Center(
+//                           child: Padding(
+//                             padding: const EdgeInsets.all(8.0),
+//                             child: ClipRRect(
+//                               borderRadius: BorderRadius.circular(10),
+//                               child: FadeInImage.assetNetwork(
+//                                 placeholder: "assets/logo.png",
+//                                 image: "${imgUrl + value[j]["BNR"]}",
+//                                 height: 100,
+//                                 placeholderFit: BoxFit.scaleDown,
+//                                 fit: BoxFit.scaleDown,
+//                               ),
+//                             ),
+//                           ),
+//                         ),
+//                       ),
+//                   ],
+//                 ),
+//               )
+//           ]));
+//         }
+//       });
+
+//       setState(() {
+//         dataz = rajux;
+//       });
+//     } catch (e) {
+//       print(e);
+//     }
+//   }
+
+//   BannerAd? _bannerAd;
+
+//   void _loadAd() {
+//     final bannerAd = BannerAd(
+//       size: widget.adSize,
+//       adUnitId: widget.adUnitId,
+//       request: const AdRequest(),
+//       listener: BannerAdListener(
+//         // Called when an ad is successfully received.
+//         onAdLoaded: (ad) {
+//           if (!mounted) {
+//             ad.dispose();
+//             return;
+//           }
+//           setState(() {
+//             _bannerAd = ad as BannerAd;
+//           });
+//         },
+//         // Called when an ad request failed.
+//         onAdFailedToLoad: (ad, error) {
+//           print("ttyyy$error");
+//           debugPrint('BannerAd failed to load: $error');
+//           ad.dispose();
+//         },
+//       ),
+//     );
+
+//     // Start loading.
+//     bannerAd.load();
+//   }
+
+//   @override
+//   void initState() {
+//     // TODO: implement initState
+//     super.initState();
+//     _loadAd();
+//     featchdata();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//         bottomNavigationBar: Container(
+//           height: widget.adSize.height.toDouble(),
+//           child: _bannerAd == null
+//               // Nothing to render yet.
+//               ? SizedBox()
+//               // The actual ad.
+//               : AdWidget(ad: _bannerAd!),
+//         ),
+//         appBar: AppBar(
+//           toolbarHeight: 80,
+//           backgroundColor: Colors.transparent,
+//           centerTitle: false,
+//           actions: [
+//             Icon(
+//               Icons.emoji_events,
+//               color: Colors.white,
+//               size: 40,
+//             ),
+//             Icon(
+//               Icons.person,
+//               color: Colors.white,
+//               size: 40,
+//             ),
+//           ],
+//           leadingWidth: 0,
+//           title: Align(
+//             alignment: Alignment.topLeft,
+//             child: Image.asset(
+//               "assets/logo.png",
+//               height: 50,
+//             ),
+//           ),
+//         ),
+//         body: dataz.length < 1
+//             ? Center(child: CircularProgressIndicator())
+//             : SingleChildScrollView(
+//                 child: Column(
+//                   children: dataz,
+//                 ),
+//               ));
+//   }
+// }

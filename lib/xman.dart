@@ -1,15 +1,29 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:cinemagicx/dlist.dart';
 import 'package:cinemagicx/morex.dart';
 import 'package:cinemagicx/raju.dart';
+import 'package:cinemagicx/searc.dart';
+import 'package:cinemagicx/signup.dart';
 import 'package:cinemagicx/videox.dart';
+import 'package:cinemagicx/watchltr.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class Xman extends StatefulWidget {
-  const Xman({super.key});
+  Xman({super.key});
+
+  final AdSize adSize = AdSize.fullBanner;
+
+  final String adUnitId = Platform.isAndroid
+      // Use this ad unit on Android...
+      ? 'ca-app-pub-3940256099942544/6300978111'
+      // ... or this one on iOS.
+      : 'ca-app-pub-3940256099942544/2934735716';
 
   @override
   State<Xman> createState() => XmanX();
@@ -20,6 +34,7 @@ class Xman extends StatefulWidget {
 class XmanX extends State<Xman> with TickerProviderStateMixin {
   int expandedTileIndex = -1;
 
+  BannerAd? _bannerAd;
   List<dynamic> data = [];
 
   Future<void> featchdata() async {
@@ -55,6 +70,7 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
     featchdata();
 
     tabController = TabController(length: 0, vsync: this);
+    _loadAd();
   }
 
   @override
@@ -67,16 +83,72 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
           backgroundColor: Colors.transparent,
           centerTitle: false,
           actions: [
+            IconButton(
+              onPressed: () async {
+                // await showModalBottomSheet(
+                //     backgroundColor: Color(0xff071427),
+                //     context: context,
+                //     builder: (context) => pPadding(
+                //           padding: const EdgeInsets.only(
+                //               top: 15, left: 10, right: 10),
+                //           child: XSearch(),
+                //         ));
+
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => XSearch(),
+                    ));
+              },
+              icon: Icon(
+                Icons.search,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
             Icon(
               Icons.emoji_events,
               color: Colors.white,
               size: 40,
             ),
-            Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 40,
-            ),
+            MenuAnchor(
+              menuChildren: [
+                MenuItemButton(
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => MySignUp()));
+                    },
+                    child: Text("Profile")),
+                MenuItemButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => DownloadedPage()));
+                    },
+                    child: Text("Download List")),
+                MenuItemButton(
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => Vatchlist()));
+                    },
+                    child: Text("Watch Later")),
+              ],
+              builder: (context, controller, child) => IconButton(
+                onPressed: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+                icon: Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+            )
           ],
           title: Image.asset(
             "assets/logo.png",
@@ -94,17 +166,26 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
                           FadeInImage.assetNetwork(
                             placeholder: "assets/loader.gif",
                             image: "${imgUrl + data[index]["dp"]}",
-                            height: 30,
+                            height: 20,
                           ),
                           Text(
                             "${data[index]["name"]}",
                             style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white),
                           )
                         ],
                       ))),
+        ),
+        bottomNavigationBar: Container(
+          width: screenSize.width,
+          height: widget.adSize.height.toDouble(),
+          child: _bannerAd == null
+              // Nothing to render yet.
+              ? SizedBox()
+              // The actual ad.
+              : Center(child: AdWidget(ad: _bannerAd!)),
         ),
         body: TabBarView(
             controller: tabController,
@@ -151,12 +232,22 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
                 } else if (dtx.first == "SLIDER") {
                   List<Widget> imglist = List.generate(
                       value.length,
-                      (indexxx) => ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: FadeInImage.assetNetwork(
-                              placeholder: "assets/loader.gif",
-                              image: "${imgUrl + value[indexxx]["BNR"]}",
-                              fit: BoxFit.scaleDown,
+                      (indexxx) => InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        VideoX(idx: value[indexxx]["_id"]),
+                                  ));
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: FadeInImage.assetNetwork(
+                                placeholder: "assets/loader.gif",
+                                image: "${imgUrl + value[indexxx]["BNR"]}",
+                                fit: BoxFit.scaleDown,
+                              ),
                             ),
                           ));
 
@@ -206,14 +297,18 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
 
                   rajux.add(Align(
                     alignment: Alignment.topLeft,
-                    child: Text(
-                      dtx[1],
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        dtx[1],
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.normal),
+                      ),
                     ),
                   ));
                 } else {
-                  rajux.add(SizedBox(
+                  rajux.add(Container(
+                    // color: Colors.white,
                     height: 150,
                     child: ListView.builder(
                       itemCount: value.length,
@@ -248,10 +343,13 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
                   rajux.add(Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "${dtx.first}",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Text(
+                          "${dtx.first}",
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.normal),
+                        ),
                       ),
                       if (dtx.length > 1 && dtx.last != "null")
                         FilledButton(
@@ -271,7 +369,7 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
                                     Colors.transparent)),
                             child: Text(
                               "More",
-                              style: TextStyle(fontSize: 13),
+                              style: TextStyle(fontSize: 11),
                             )),
                     ],
                   ));
@@ -284,5 +382,34 @@ class XmanX extends State<Xman> with TickerProviderStateMixin {
               return SingleChildScrollView(
                   child: Column(children: rajux.reversed.toList()));
             })));
+  }
+
+  void _loadAd() {
+    final bannerAd = BannerAd(
+      size: widget.adSize,
+      adUnitId: widget.adUnitId,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        // Called when an ad is successfully received.
+        onAdLoaded: (ad) {
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _bannerAd = ad as BannerAd;
+          });
+        },
+        // Called when an ad request failed.
+        onAdFailedToLoad: (ad, error) {
+          print("ttyyy$error");
+          debugPrint('BannerAd failed to load: $error');
+          ad.dispose();
+        },
+      ),
+    );
+
+    // Start loading.
+    bannerAd.load();
   }
 }

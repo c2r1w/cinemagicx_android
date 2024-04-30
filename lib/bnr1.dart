@@ -1,5 +1,5 @@
-
 import 'package:cinemagicx/bnr2.dart';
+import 'package:cinemagicx/login.dart';
 import 'package:flutter/material.dart';
 
 class Bnr1 extends StatefulWidget {
@@ -24,7 +24,26 @@ class Bnr1X extends State<Bnr1> {
           padding: const EdgeInsets.all(16.0),
           child: TextButton(
             child: const Text("skip"),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const MyLogin(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(1.0, 0.0);
+                  const end = Offset.zero;
+                  const curve = Curves.ease;
+
+                  var tween = Tween(begin: begin, end: end)
+                      .chain(CurveTween(curve: curve));
+
+                  return SlideTransition(
+                    position: animation.drive(tween),
+                    child: child,
+                  );
+                },
+              ));
+            },
           ),
         ),
       ),
@@ -34,6 +53,7 @@ class Bnr1X extends State<Bnr1> {
         child: Image.asset(
           "assets/bnr.png",
           fit: BoxFit.scaleDown,
+          height: 300,
         ),
       ),
       const Spacer(),
