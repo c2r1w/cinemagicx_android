@@ -47,18 +47,17 @@ class MyApp extends StatelessWidget {
         ),
         // home: HomePage());
 
-        // home: const MyHomePage(title: 'Flutter Demo Home Page'),
 
-        // home: MySpalash());
-        home: VideoX(
-          idx: "65fc62a2df0c3449462877a0",
-        ));
 
     // home: DloadPrgs(
     //   u: fgj,
     // )
 
-    // );
+
+class LevelPlayNativeAdListenerClass with LevelPlayNativeAdListener {
+  @override
+  void onAdClicked(LevelPlayNativeAd? nativeAd, IronSourceAdInfo? adInfo) {
+    // TODO: implement onAdClicked
   }
 }
 
@@ -114,9 +113,10 @@ class NotificationDemo extends StatelessWidget {
       'Title', // Notification title
       'Body', // Notification body
 
-      platformChannelSpecifics,
-      payload: 'item x',
-    );
+
+}
+
+
   }
 }
 
