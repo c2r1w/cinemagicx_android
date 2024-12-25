@@ -1,12 +1,12 @@
 import 'package:flutter_hls_parser/flutter_hls_parser.dart';
 import 'package:http/http.dart' as http;
 
-// const backendurl = "http://77.37.44.246/api";
+const backendurl = "http://api.cinemagicx.com/api";
 
-const imgUrl = "http://77.37.44.246:8000/";
+const imgUrl = "http://cdn.cinemagicx.com/";
 
 // // const sentotp = "/sendotp";//{"number":"83748374"}
-const backendurl = "http://192.168.1.36:3000/api";
+// const backendurl = "http://192.168.1.36:3000/api";
 
 // const imgUrl = "http://192.168.1.43:3000/uploads/";
 
@@ -27,6 +27,9 @@ Future<void> getHLSVideoUrls() async {
     throw Exception('Failed to load HLS playlist');
   }
 }
+
+
+
 
 // void main(List<String> args) {
 //   getHLSVideoUrls();

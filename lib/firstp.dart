@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cinemagicx/bnr1.dart';
-import 'package:cinemagicx/bnr2.dart';
 import 'package:cinemagicx/dlist.dart';
+import 'package:cinemagicx/notification_servicesx.dart';
+import 'package:cinemagicx/raju.dart';
 import 'package:cinemagicx/xman.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,15 +21,38 @@ class MySpalash extends StatefulWidget {
 // 005EEA border 0381E9 btn
 
 class MySpalashX extends State<MySpalash> {
+  NotificationServicesx notificationServicesx = NotificationServicesx();
+
   @override
   void initState() {
-    Timer.periodic(const Duration(seconds: 3), (timmer) async {
+    notificationServicesx.requestNotificationPermission();
+
+    notificationServicesx.gettoken().then((onValue) {
+      print("---->$onValue");
+    });
+
+    Future.delayed(const Duration(seconds: 2), () async {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
 
       try {
-        final rt = await http.get(Uri.parse("https://google.com"));
+        if (prefs.getString("_id") != null) {
+          var response = await http.get(Uri.parse(
+              '$backendurl/profileupdate?_id=${prefs.getString("_id")}'));
+          final rtc = jsonDecode(response.body);
+
+          List<String> rent = [...rtc["rent"]];
+
+          prefs.setInt("sub", rtc["sub"] ?? 0);
+
+          prefs.setStringList("rent", rent);
+        } else {
+          final rt = await http.get(Uri.parse("https://google.com"));
+        }
       } catch (e) {
-        if (prefs.getBool("islogin") == true) {
+        if (prefs.getString("_id") != null) {
+          if (!mounted) {
+            return;
+          }
           await showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -77,27 +102,23 @@ class MySpalashX extends State<MySpalash> {
                     ],
                   ));
         }
-
-        setState(() {
-          timmer.cancel();
-        });
-
-        return;
       }
 
-      setState(() {
-        timmer.cancel();
-
+      if (prefs.getString("_id") != null) {
         Navigator.pushReplacement(context, MaterialPageRoute(
           builder: (context) {
-            if (prefs.getBool("islogin") == true) {
-              return Xman();
-            } else {
-              return Bnr1();
-            }
+            return Xman();
           },
         ));
-      });
+      } else {
+        notificationServicesx.subxrib().then((c) {
+          Navigator.pushReplacement(context, MaterialPageRoute(
+            builder: (context) {
+              return Bnr1();
+            },
+          ));
+        });
+      }
     });
 
     super.initState();
@@ -109,7 +130,6 @@ class MySpalashX extends State<MySpalash> {
 
   @override
   Widget build(BuildContext context) {
-    double screenSize = MediaQuery.of(context).size.width;
     return Scaffold(
       body: Center(
         child: Column(

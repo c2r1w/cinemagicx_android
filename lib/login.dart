@@ -24,37 +24,71 @@ class _MyLoginState extends State<MyLogin> {
 //login requests --> {"number":""}
 
   Future<void> sendotp(BuildContext ctx) async {
-    // try {
-    //   var response = await http.post(Uri.parse('$backendurl/sendotp'),
-    //       headers: {"Content-Type": "application/json"},
-    //       body: jsonEncode({"number": _textEditingController.text}));
+    try {
+      var response = await http.post(Uri.parse('$backendurl/sendotp'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"phone": _textEditingController.text}));
 
-    //   print(response.body);
-    //   if (response.body.contains("OTP SENT")) {
-    //   } else {
-    //     setState(() {
-    //       isclick = false;
-    //     });
-    //   }
-    // } catch (e) {
-    //   print(e);
-    // }
-
-    Timer.periodic(const Duration(seconds: 3), (timmer) async {
-      setState(() {
-        timmer.cancel();
-        print("login requests send -->${jsonEncode({
-              "number": _textEditingController.text
-            })} ");
-
+      print(response.body);
+      if (response.body.contains("acknowledged")) {
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) {
           return MyOtp(
             num: _textEditingController.text,
           );
         }));
+      } else {
+        setState(() {
+          isclick = false;
+        });
+      }
+    } catch (e) {
+      print(e);
+    }
+
+    // Timer.periodic(const Duration(seconds: 3), (timmer) async {
+    //   setState(() {
+    //     timmer.cancel();
+    //     print("login requests send -->${jsonEncode({
+    //           "number": _textEditingController.text
+    //         })} ");
+
+    // Navigator.pushReplacement(context,
+    //     MaterialPageRoute(builder: (context) {
+    //   return MyOtp(
+    //     num: _textEditingController.text,
+    //   );
+    // }));
+    //   });
+    // });
+  }
+
+  bool isindia = true;
+
+  Future<void> rtd() async {
+    final jjjj = await http.get(Uri.parse("http://ipinfo.io/"),
+        headers: {"User-Agent": "curl/8.7.1"});
+
+    print(jjjj.body);
+
+    final kl = jsonDecode(jjjj.body);
+
+    if (kl["country"] == "IN") {
+      print("im india");
+    } else {
+      setState(() {
+        isindia = false;
       });
-    });
+
+      print("im innotdia");
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    rtd();
   }
 
   @override
@@ -106,8 +140,8 @@ class _MyLoginState extends State<MyLogin> {
               cursorColor: Colors.white,
               style: const TextStyle(color: Colors.white),
               controller: _textEditingController,
-              decoration: const InputDecoration(
-                label: Text("Mobile Number",
+              decoration: InputDecoration(
+                label: Text(isindia ? "Mobile Number" : "Email Address",
                     style: TextStyle(color: Colors.white)),
                 border: OutlineInputBorder(
                     borderSide: BorderSide(color: Color(0xff005EEA))),
@@ -128,7 +162,7 @@ class _MyLoginState extends State<MyLogin> {
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: const Column(
+                        title: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -137,7 +171,7 @@ class _MyLoginState extends State<MyLogin> {
                               color: Colors.white,
                             ),
                             Text(
-                              "Please wait",
+                              "Please $isindia wait",
                               style: TextStyle(color: Colors.white),
                             ),
                           ],

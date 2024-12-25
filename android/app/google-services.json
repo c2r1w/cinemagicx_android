@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "69032831492",
+    "project_id": "chinemagix",
+    "storage_bucket": "chinemagix.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69032831492:android:b1d2d5c2398b23f5062351",
+        "android_client_info": {
+          "package_name": "com.shivalay.cinemagicx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZ1oBmBKDuWDJ22xfFqRdZRv6JksqvuB0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69032831492:android:5060dd764ddb785f062351",
+        "android_client_info": {
+          "package_name": "com.shivalay.cinemagicx.cinemagicx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZ1oBmBKDuWDJ22xfFqRdZRv6JksqvuB0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

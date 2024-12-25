@@ -50,7 +50,7 @@ class Bnr2X extends State<Bnr2> {
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 50),
         child: Image.asset(
-          "assets/bnr.png",
+          "assets/logo.png",
           fit: BoxFit.scaleDown,
           height: 300,
         ),
@@ -67,8 +67,7 @@ class Bnr2X extends State<Bnr2> {
       ),
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: 30.0),
-        child: Text(
-            "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+        child: Text("",
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xff1AC8FF))),
       ),

@@ -1,15 +1,8 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:cinemagicx/raju.dart';
-import 'package:flutter/foundation.dart';
+import 'package:cinemagicx/dlist.dart';
+import 'package:cinemagicx/searc.dart';
+import 'package:cinemagicx/signup.dart';
+import 'package:cinemagicx/watchltr.dart';
 import 'package:flutter/material.dart';
-
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
-
-import 'package:pinput/pinput.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({
@@ -26,93 +19,126 @@ class _HomePageState extends State<HomePage> {
   List<String> raju = ["raju"];
 
   bool isclick = false;
+  int th = 0;
+  final tabController = DefaultTabController(length: 5, child: SizedBox());
 
   @override
   Widget build(BuildContext context) {
-    double screenSize = MediaQuery.of(context).size.width;
     return Scaffold(
-        body: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
+        body: SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10.0),
+            child: Row(
               children: [
-                const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Column(
-                      children: [
-                        Icon(
-                          Icons.video_call,
-                          size: 40,
-                          color: Color(0xff1AC8FF),
-                        ),
-                        Text("Home"),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(
-                          Icons.video_call,
-                          size: 40,
-                          color: Color(0xff1AC8FF),
-                        ),
-                        Text("Web Series"),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(
-                          Icons.video_call,
-                          size: 40,
-                          color: Color(0xff1AC8FF),
-                        ),
-                        Text("Short Film"),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(
-                          Icons.video_call,
-                          size: 40,
-                          color: Color(0xff1AC8FF),
-                        ),
-                        Text("Films"),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(
-                          Icons.video_call,
-                          size: 40,
-                          color: Color(0xff1AC8FF),
-                        ),
-                        Text("Films"),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(
-                          Icons.video_call,
-                          size: 40,
-                          color: Color(0xff1AC8FF),
-                        ),
-                        Text("Films"),
-                      ],
-                    ),
-                  ],
+                Image.asset(
+                  "assets/logo.png",
+                  height: 50,
                 ),
-                SizedBox(
-                    height: 300,
-                    child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3),
-                      itemCount: raju.length,
-                      itemBuilder: (context, index) {
-                        return FilledButton(
-                            onPressed: () {}, child: Text("ADD"));
-                      },
-                    ))
+                Spacer(),
+                IconButton(
+                  onPressed: () async {
+                    // await showModalBottomSheet(
+                    //     backgroundColor: Color(0xff071427),
+                    //     context: context,
+                    //     builder: (context) => pPadding(
+                    //           padding: const EdgeInsets.only(
+                    //               top: 15, left: 10, right: 10),
+                    //           child: XSearch(),
+                    //         ));
+
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => XSearch(),
+                        ));
+                  },
+                  icon: Icon(
+                    Icons.search,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                MenuAnchor(
+                  menuChildren: [
+                    MenuItemButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => MySignUp()));
+                        },
+                        child: Text("Profile")),
+                    MenuItemButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => DownloadedPage()));
+                        },
+                        child: Text("Download List")),
+                    MenuItemButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Vatchlist()));
+                        },
+                        child: Text("Watch Later")),
+                  ],
+                  builder: (context, controller, child) => IconButton(
+                    onPressed: () {
+                      if (controller.isOpen) {
+                        controller.close();
+                      } else {
+                        controller.open();
+                      }
+                    },
+                    icon: Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                  ),
+                )
               ],
-            )));
+            ),
+          ),
+          DefaultTabController(
+            length: 5,
+            child: TabBar(
+              tabAlignment: TabAlignment.fill,
+              isScrollable: false,
+              dividerHeight: 0,
+              unselectedLabelColor: Colors.white,
+              indicatorSize: TabBarIndicatorSize.tab,
+              tabs: [
+                Tab(
+                  icon: Icon(Icons.star),
+                  text: "Home",
+                ),
+                Tab(
+                  icon: Icon(Icons.star),
+                  text: "Home",
+                ),
+                Tab(
+                  icon: Icon(Icons.star),
+                  text: "Home",
+                ),
+                Tab(
+                  icon: Icon(Icons.star),
+                  text: "Home",
+                ),
+                Tab(
+                  icon: Icon(Icons.star),
+                  text: "Homex",
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ));
   }
 }

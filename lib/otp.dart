@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cinemagicx/firstp.dart';
 import 'package:cinemagicx/raju.dart';
 import 'package:cinemagicx/signup.dart';
 import 'package:cinemagicx/xman.dart';
@@ -32,37 +33,70 @@ class _MyOtpState extends State<MyOtp> {
 //login requests --> {"number":""}
 
   Future<void> sendotp(BuildContext ctx) async {
-    // try {
-    //   var response = await http.post(Uri.parse('$backendurl/sendotp'),
-    //       headers: {"Content-Type": "application/json"},
-    //       body: jsonEncode({"number": _textEditingController.text}));
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    //   print(response.body);
-    //   if (response.body.contains("OTP SENT")) {
-    //   } else {
-    //     setState(() {
-    //       isclick = false;
-    //     });
-    //   }
-    // } catch (e) {
-    //   print(e);
-    // }
+    try {
+      var response = await http.post(Uri.parse('$backendurl/verifyotp'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(
+              {"phone": widget.num, "otp": _textEditingController.text}));
 
-    Timer.periodic(const Duration(seconds: 3), (timmer) async {
-      final prefh = await SharedPreferences.getInstance();
+      print(jsonEncode(
+          {"phone": widget.num, "otp": _textEditingController.text}));
 
-      await prefh.setBool("islogin", true);
+      print(response.body);
 
-      print(prefh.getBool("islogin"));
-      setState(() {
-        timmer.cancel();
+      if (response.body.contains("_id")) {
+        final rtc = jsonDecode(response.body);
 
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) {
-          return Xman();
-        }));
-      });
-    });
+        List<String> rent = [...rtc["rent"]];
+
+        prefs.setString("_id", rtc["_id"]);
+        prefs.setString("name", rtc["name"] ?? "");
+        prefs.setString("email", rtc["email"] ?? "");
+        prefs.setString("phone", rtc["phone"] ?? "");
+        prefs.setString("dp", rtc["dp"] ?? "");
+        prefs.setInt("sub", rtc["sub"] ?? 0);
+        prefs.setStringList("rent", rent);
+
+        rtc["ref"];
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => MySpalash()),
+          (Route<dynamic> route) => false,
+        );
+      } else {
+        setState(() {
+          isclick = false;
+        });
+
+        await showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+                  title: Text("Warning"),
+                  content: Text("Otp Not Match"),
+                ));
+      }
+    } catch (e) {
+      print(e);
+    }
+
+    // Timer.periodic(const Duration(seconds: 3), (timmer) async {
+    //   final prefh = await SharedPreferences.getInstance();
+
+    //   await prefh.setBool("islogin", true);
+
+    //   print(prefh.getBool("islogin"));
+    //   setState(() {
+    //     timmer.cancel();
+
+    //     Navigator.pushReplacement(context,
+    //         MaterialPageRoute(builder: (context) {
+    //       return Xman();
+    //     }));
+    //   });
+    // });
   }
 
   @override
@@ -129,7 +163,10 @@ class _MyOtpState extends State<MyOtp> {
             //   height: 40,
             // ),
             const Spacer(),
-            const Pinput(),
+            Pinput(
+              length: 5,
+              controller: _textEditingController,
+            ),
 
             const SizedBox(
               height: 20,

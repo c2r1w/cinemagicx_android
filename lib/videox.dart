@@ -2,23 +2,35 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:chewie/chewie.dart';
+import 'package:better_player/better_player.dart';
+
 import 'package:cinemagicx/dlist.dart';
+import 'package:cinemagicx/rads.dart';
 import 'package:cinemagicx/raju.dart';
 import 'package:cinemagicx/ratingx.dart';
 import 'package:cinemagicx/signup.dart';
+import 'package:cinemagicx/sub.dart';
 import 'package:cinemagicx/watchltr.dart';
-import 'package:cinemagicx/xman.dart';
 import 'package:flutter/material.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfwebcheckoutpayment.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
+import 'package:flutter_cashfree_pg_sdk/api/cftheme/cftheme.dart';
+import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
 import 'package:flutter_hls_parser/flutter_hls_parser.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:ironsource_mediation/ironsource_mediation.dart';
+// import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:math';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+
 //
 
 class DloadPrgs extends StatefulWidget {
@@ -82,6 +94,9 @@ class _DloadPrgstate extends State<DloadPrgs> {
     if (tx > len - 3) {
       final outputFilex = File(appDir.path + "/" + widget.data["_id"] + ".jpg");
 
+      // await FFmpegKit.execute(
+      //     '-i ${appDir.path + "/" + widget.data["_id"]}.ts -c:v mpeg4 ${appDir.path + "/" + widget.data["_id"]}.mp4');
+
       await _downloadFile("$imgUrl/${widget.data["BNR"]}", outputFilex);
 
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -139,12 +154,6 @@ class _DloadPrgstate extends State<DloadPrgs> {
   }
 
   @override
-  void dispose() {
-    client.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return AlertDialog(
       // actionsAlignment: MainAxisAlignment.center,
@@ -171,14 +180,12 @@ class _DloadPrgstate extends State<DloadPrgs> {
 class VideoX extends StatefulWidget {
   String idx = "";
 
-  final AdSize adSize = AdSize.fullBanner;
+//showads
+  final AdSize adSize = AdSize.banner;
 
   final String adUnitId = Platform.isAndroid
-      // Use this ad unit on Android...
-      ? 'ca-app-pub-3940256099942544/6300978111'
-      // ... or this one on iOS.
-      : 'ca-app-pub-3940256099942544/2934735716';
-
+      ? 'ca-app-pub-4899021849652416/7371054139'
+      : 'ca-app-pub-4899021849652416/7520543235';
   VideoX({super.key, this.idx = ""});
 
   @override
@@ -187,52 +194,131 @@ class VideoX extends StatefulWidget {
 
 // 005EEA border 0381E9 btn
 
-class VideoXX extends State<VideoX> {
+class VideoXX extends State<VideoX> with LevelPlayInterstitialAdListener {
+  bool rdeatc = true;
+
+  /*
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      setState(() {
+        rdeatc = false;
+      });
+
+      // App is paused, store the video state
+    } else if (state == AppLifecycleState.resumed) {
+      // App is resumed, restore the video state
+
+      _controllerx?.dispose();
+
+      if (!rdeatc) {
+        _controllerrtx?.initialize().then((xgi) {
+          _controllerx = ChewieController(
+              videoPlayerController: _controllerrtx!,
+              looping: true,
+              autoPlay: true,
+              customControls: CupertinoControls(
+                backgroundColor: Colors.black12,
+                iconColor: Colors.white,
+              ));
+
+          // myideo = Chewie(controller: _controllerx!);
+
+          setState(() {
+            rdeatc = true;
+          });
+        });
+      }
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+*/
+
 //download
   SharedPreferences? pref;
   Timer? _timer;
 
-  Future<void> updateserverx({bool isstart = false}) async {
+  // @override
+  // void dispose() {
+
+  //   _timer?.call();
+
+  //   super
+  //       .dispose();
+
+  // }
+
+  BetterPlayerController? _controllerrtx;
+
+  int ct = 0;
+
+  Future<void> updateserverx({int typ = 0, String extra = ""}) async {
     if (pref == null) {
       pref = await SharedPreferences.getInstance();
     }
 
-    print("inside timer --> go${isstart.toString()} ing");
+/*
 
-    if (isstart) {
-      pref?.setInt("ct", 0);
 
-      _timer = Timer.periodic(Duration(seconds: 5), (timer) {
-        print("inside timer going");
+typ=1
+typ=2 close video
+type 3 = watch  ads compelete & ex==ads id  intrege
+*/
 
-        if (_controllerx != null && _controllerx!.isPlaying) {
-          print("inside timer going to incaress");
-          pref?.setInt("ct",
-              ((pref?.getInt("ct") == null ? 0 : pref!.getInt("ct")!) + 5));
+    switch (typ) {
+      case 1:
+        {
+          await pref?.setInt("wt", DateTime.now().millisecondsSinceEpoch);
+
+          print("i saved ${pref?.getInt("wt")}");
+
+          break;
         }
-      });
-    } else {
-      _timer?.cancel();
-      final response = await http.get(
-        Uri.parse(
-            '$backendurl/status?vid=${widget.idx}&wt=${pref?.getInt("ct") ?? 0}'),
-        headers: {"Content-Type": "application/json"},
-      );
+      case 2:
+        {
+          if ((pref?.getInt("wt") ?? 0) == 0) {
+            break;
+          }
+          http.get(
+            Uri.parse(
+                '$backendurl/status?uid=${pref?.getString("_id") ?? ""}&vid=${widget.idx}&wt=${(DateTime.now().millisecondsSinceEpoch) - (pref?.getInt("wt") ?? 0)}&t=2'),
+            headers: {"Content-Type": "application/json"},
+          ).then((op) {
+            print(
+                "i dumbimrr in win ${(DateTime.now().millisecondsSinceEpoch) - (pref?.getInt("wt") ?? 0)}");
 
-      _controllerx?.videoPlayerController.dispose();
+            pref?.setInt("wt", 0);
+          });
+        }
+      case 3:
+        {
+          http.get(
+            Uri.parse(
+                '$backendurl/status?uid=${pref?.getString("_id") ?? ""}&vid=${widget.idx}&t=3&e=$extra'),
+            headers: {"Content-Type": "application/json"},
+          ).then((op) {
+            print("i cmp ads in win $extra");
+          });
+          ;
+        }
 
-      _controllerx?.dispose();
-      _controllerxads?.dispose();
-      _controllerxads?.videoPlayerController.dispose();
+      default:
+        print("object--->$typ");
     }
+
+    // _controllerx?.videoPlayerController.dispose();
+    // _controllerx?.dispose();
+    // _controllerxads?.videoPlayerController.dispose();
+    // _controllerxads?.dispose();
   }
 
-  Future<void> updateads() async {
-    final response = await http.get(
-      Uri.parse('$backendurl/status?aid=${adsids}'),
-      headers: {"Content-Type": "application/json"},
-    );
-  }
+  // Future<void> updateads() async {
+  //   final response = await http.get(
+  //     Uri.parse('$backendurl/status?aid=${adsids}'),
+  //     headers: {"Content-Type": "application/json"},
+  //   );
+  // }
 
   Future<void> getHLSVideoUrls(Map<String, dynamic> data) async {
     final pref = await SharedPreferences.getInstance();
@@ -249,7 +335,7 @@ class VideoXX extends State<VideoX> {
             TextButton(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(
                       builder: (context) {
-                        updateserverx();
+                        if (iads) {}
                         return DownloadedPage();
                       },
                     )),
@@ -354,6 +440,7 @@ class VideoXX extends State<VideoX> {
   }
 
   int expandedTileIndex = -1;
+  //showads
   BannerAd? _bannerAd;
 
   Future<void> shareNetworkImage(String imageUrl, String text) async {
@@ -377,6 +464,9 @@ class VideoXX extends State<VideoX> {
 
   bool xtg = false;
 
+  bool waitforinits = false;
+
+//showads
   InterstitialAd? _interstitialAd;
   int _numInterstitialLoadAttempts = 0;
 
@@ -389,21 +479,22 @@ class VideoXX extends State<VideoX> {
   int Changetx = 10;
   int Changextxx = 10;
 
-  ChewieController? _controllerx;
-  ChewieController? _controllerxtrailer;
-  ChewieController? _controllerxads;
+  BetterPlayerController? _controllerx;
+  BetterPlayerController? _controllerxtrailer;
+  BetterPlayerController? _controllerxads;
 
   bool playp = false;
   bool skiped = true;
   Timer? tre;
   void func() {
-    tre = Timer.periodic(Duration(seconds: 1), (timer) {
+    tre = Timer.periodic(Duration(seconds: 1), (tcc) {
       setState(() {
         Changetx--;
       });
       if (Changetx < 1) {
         // _controllerx?.play();
         tre?.cancel();
+        tcc.cancel();
       }
     });
   }
@@ -413,51 +504,71 @@ class VideoXX extends State<VideoX> {
   void _createInterstitialAd() {
     InterstitialAd.load(
         adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-3940256099942544/1033173712'
-            : 'ca-app-pub-3940256099942544/4411468910',
+            ? 'ca-app-pub-4899021849652416/6263418147'
+            : 'ca-app-pub-4899021849652416/9237821727',
         request: request,
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
-            print('$ad loaded');
-            _interstitialAd = ad;
-            _numInterstitialLoadAttempts = 0;
-            _interstitialAd!.setImmersiveMode(true);
+            print('$ad loaded\n\mi  am   loadddddddddddddddddddddddd');
+
+            setState(() {
+              _interstitialAd = ad;
+              _numInterstitialLoadAttempts = 0;
+            });
+            _showInterstitialAd();
           },
           onAdFailedToLoad: (LoadAdError error) {
-            print('InterstitialAd failed to load: $error.');
-            _numInterstitialLoadAttempts += 1;
-            _interstitialAd = null;
-            if (_numInterstitialLoadAttempts < 4) {
-              _createInterstitialAd();
-            }
+            setState(() {
+              playp = true;
+              adstype = 0;
+            });
+            _controllerx?.play();
+
+            // print('InterstitialAd failed to load  got errrrrrrrrrrrr: $error.');
+            // _numInterstitialLoadAttempts += 1;
+            // _interstitialAd = null;
+            // if (_numInterstitialLoadAttempts < 1) {
+            //   print("=======\n---\n----\n----\n=========help-------\n");
+            //   _createInterstitialAd();
+            // }
           },
         ));
   }
 
   void _showInterstitialAd() {
+    print(
+        'Im called: attempt to show interstitial before loaded.\n\n--------------------');
+
     if (_interstitialAd == null) {
-      print('Warning: attempt to show interstitial before loaded.');
+      print(
+          'Warning: attempt to show interstitial before loaded.\n\n--------------------');
+
+      _controllerx?.play();
 
       setState(() {
         adstype = 0;
+        waitforinits = false;
       });
 
-      updateserverx(isstart: true);
+      updateserverx(typ: 1);
 
-      _controllerx?.play();
       return;
     }
+
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (InterstitialAd ad) =>
           print('ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (InterstitialAd ad) {
         print('$ad onAdDismissedFullScreenContent.');
         setState(() {
+          playp = true;
           adstype = 0;
         });
-        updateserverx(isstart: true);
+
+        updateserverx(typ: 1);
 
         _controllerx?.play();
+
         ad.dispose();
         // _createInterstitialAd();
       },
@@ -465,16 +576,15 @@ class VideoXX extends State<VideoX> {
         print('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         setState(() {
+          playp = true;
           adstype = 0;
         });
-        updateserverx(isstart: true);
-
         _controllerx?.play();
-        _createInterstitialAd();
+
+        updateserverx(typ: 1);
       },
     );
     _interstitialAd!.show();
-    _interstitialAd = null;
   }
 
   void _loadAd() {
@@ -526,6 +636,8 @@ class VideoXX extends State<VideoX> {
 
       data = tgp["vdo"];
 
+      canplayx(data);
+
       setState(() {});
 
       if (tgp["ser"] != null) {
@@ -556,19 +668,35 @@ class VideoXX extends State<VideoX> {
           print(hlsx);
 
           if (hlsx["hls"] != null) {
-            final _controllerz = VideoPlayerController.networkUrl(
-              // Uri.parse("http://localhost:3000/uploads/x.mp4"),
-              Uri.parse(hlsx["hls"]),
+            final BetterPlayerDataSource initialcontrollads =
+                BetterPlayerDataSource(
+              BetterPlayerDataSourceType.network,
+              hlsx["hls"],
             );
-            await _controllerz.initialize();
 
-            _controllerxads = ChewieController(
-                videoPlayerController: _controllerz,
-                aspectRatio: _controllerz.value.aspectRatio,
-                looping: true,
-                showControls: false);
+            _controllerxads = BetterPlayerController(
+              BetterPlayerConfiguration(
+                  allowedScreenSleep: false,
+                  controlsConfiguration: BetterPlayerControlsConfiguration(
+                    enableProgressBar: false,
+                    enableSkips: false,
+                    enablePlayPause: false,
+                    enableMute: false,
+                    enablePlaybackSpeed: false,
+                    enableProgressText: false,
+                    enableQualities: false,
+                    enableSubtitles: false,
+                    enableAudioTracks: false,
+                    enableOverflowMenu: false,
+                    enableRetry: false,
+                    enableFullscreen: true,
+                  )),
+              betterPlayerDataSource: initialcontrollads,
+            );
           }
           adstype = 2;
+
+          setState(() {});
         }
       }
 
@@ -584,20 +712,20 @@ class VideoXX extends State<VideoX> {
         print("object");
         return;
       }
-      final _controller = VideoPlayerController.networkUrl(
-        Uri.parse(hls["hls"]),
-        // Uri.parse("http://localhost:3000/uploads/x.mp4"),
-      );
-      await _controller.initialize();
 
-      _controllerx = ChewieController(
-          videoPlayerController: _controller,
-          aspectRatio: _controller.value.aspectRatio,
-          looping: true,
-          customControls: CupertinoControls(
-            backgroundColor: Colors.black12,
-            iconColor: Colors.white,
-          ));
+      final BetterPlayerDataSource initialcontrollerrtx =
+          BetterPlayerDataSource(
+        BetterPlayerDataSourceType.network,
+        hls["hls"],
+      );
+
+      _controllerx = BetterPlayerController(
+        BetterPlayerConfiguration(
+            allowedScreenSleep: false,
+            controlsConfiguration: BetterPlayerControlsConfiguration(
+                playerTheme: BetterPlayerTheme.cupertino)),
+        betterPlayerDataSource: initialcontrollerrtx,
+      );
 
       setState(() {});
     } catch (d) {
@@ -605,13 +733,323 @@ class VideoXX extends State<VideoX> {
     }
   }
 
+  bool isinpaidlist = false;
+  bool hassub = false;
+
+  var cfPaymentGatewayService = CFPaymentGatewayService();
+
+  Future<void> updat(String daysx) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final ad24 = DateTime.now().add(Duration(days: 10)).millisecondsSinceEpoch;
+
+    // final ad24 = DateTime.now().millisecondsSinceEpoch + (60 * 1000);
+
+    List<String> rntx = prefs.getStringList("rent") ?? [];
+    List<String> rnt = prefs.getStringList("rent") ?? [];
+
+    //.contains(widget.idx);
+
+    rntx.forEach((yi) {
+      if (yi.contains(widget.idx)) {
+        rnt.remove(yi);
+      }
+    });
+
+    rnt.add("$daysx|$ad24");
+
+    await prefs.setStringList("rent", rnt);
+/*
+    try {
+      var response = await http.post(Uri.parse('$backendurl/profileupdate'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "_id": prefs.getString("_id"),
+            "rent": rnt,
+          }));
+
+      print(jsonEncode({
+        "_id": prefs.getString("_id"),
+        "rent": rnt,
+      }));
+
+      print(response.body);
+    } catch (e) {
+      print(e);
+    }
+    */
+  }
+
+  bool opx = false;
+
+  Future<void> webCheckout() async {
+    Navigator.pop(context);
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    int amt = data["price"];
+    try {
+      cfPaymentGatewayService.setCallback((datac) async {
+        print(datac);
+
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (context) => AlertDialog(
+                  title: Center(child: CircularProgressIndicator()),
+                  content: Text(
+                    "Verifying ....",
+                    textAlign: TextAlign.center,
+                  ),
+                ));
+
+        await updat(widget.idx);
+        print("parches compelete");
+
+        Navigator.pop(context);
+        await showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Icon(Icons.done, color: Colors.white),
+            content: Text("Purchase Complete..."),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("close"))
+            ],
+          ),
+        );
+
+        // canplayx(data);
+        // setState(() {});
+
+        if (iads) {}
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VideoX(
+                idx: widget.idx,
+              ),
+            ));
+      }, (err, rr) {
+        print("parches failed");
+
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Icon(
+              Icons.warning,
+              color: Colors.white,
+            ),
+            content: Text("Purchase Failed..."),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VideoX(
+                            idx: widget.idx,
+                          ),
+                        ));
+                  },
+                  child: Text("close"))
+            ],
+          ),
+        );
+        print(err.getMessage());
+        print(rr);
+      });
+
+      showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Center(child: CircularProgressIndicator()),
+                content: Text(
+                  "Wait....",
+                  textAlign: TextAlign.center,
+                ),
+              ));
+
+      var response = await http.post(Uri.parse('$backendurl/checkout'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "phone": prefs.getString("phone"),
+            "amt": amt,
+            "_id": prefs.getString("_id"),
+            "data": widget.idx,
+            "rent": true
+          }));
+
+      Navigator.pop(context);
+
+      print(response.body);
+      final rtc = jsonDecode(response.body);
+      CFEnvironment environment = CFEnvironment.PRODUCTION;
+      var session = CFSessionBuilder()
+          .setEnvironment(environment)
+          .setOrderId(rtc["order_id"])
+          .setPaymentSessionId(rtc["payment_session_id"])
+          .build();
+      var theme = CFThemeBuilder()
+          .setNavigationBarBackgroundColorColor("#ffffff")
+          .setNavigationBarTextColor("#ffffff")
+          .build();
+
+      var cfWebCheckout = CFWebCheckoutPaymentBuilder()
+          .setSession(session!)
+          .setTheme(theme)
+          .build();
+      cfPaymentGatewayService.doPayment(cfWebCheckout);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  bool cansub = false;
+  bool canbuy = false;
+  bool canplay = false;
+
+  int gh = 10;
+
+  void canplayx(data) {
+    if (data["typex"] == "Paid+Subscription") {
+      if (!(isinpaidlist || hassub)) {
+        cansub = true;
+        canbuy = true;
+        return;
+      }
+    } else if (data["typex"] == "Paid") {
+      if (!(isinpaidlist)) {
+        canbuy = true;
+        return;
+      }
+    } else if (data["typex"] == "Subscription") {
+      if (!(hassub)) {
+        cansub = true;
+        return;
+      }
+    }
+
+    canplay = true;
+  }
+
+  LevelPlayInterstitialAd? _interstitialAdx;
+
+  Future<void> showxxad() async {
+    setState(() {
+      waitforinits = true;
+    });
+
+    if (Random().nextBool()) {
+      _interstitialAdx?.loadAd();
+    } else {
+      _createInterstitialAd();
+    }
+
+    // await Timer.periodic(Duration(seconds: 2), (callback) {
+    //   print("im testdata$data");
+    //   callback.cancel();
+    // });
+
+    // });
+  }
+
+  Future<void> showaler() async {
+    final ty = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Icon(
+                Icons.emoji_events,
+                color: Colors.white,
+              ),
+              content: Text(
+                "This is A Primium Content\n  ${cansub && canbuy ? " You Can Rent only This \nOR\n You Can Subscribe" : cansub ? "You Have To Subscribe" : "You can only watch this by renting it"}",
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                canbuy
+                    ? opx
+                        ? CircularProgressIndicator()
+                        : ElevatedButton(
+                            onPressed: () {
+                              webCheckout();
+                            },
+                            child: Text("Rent"))
+                    : SizedBox(),
+                cansub
+                    ? ElevatedButton(
+                        onPressed: () async {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Subx(),
+                              ));
+                        },
+                        child: Text("Subscribe"))
+                    : SizedBox()
+              ],
+            ));
+  }
+
+  Future<void> checksub() async {
+    SharedPreferences sp = await SharedPreferences.getInstance();
+
+    if (sp.getStringList("rent") != null) {
+      final hhj = sp.getStringList("rent") ?? [];
+
+      //.contains(widget.idx);
+
+      hhj.forEach((yi) {
+        if (yi.contains(widget.idx)) {
+          try {
+            if (int.parse(yi.split("|")[1]) -
+                    DateTime.now().millisecondsSinceEpoch >
+                0) {
+              isinpaidlist = true;
+            }
+          } catch (e) {}
+        }
+      });
+    }
+
+    DateTime currentUtc = DateTime.now().toUtc();
+
+    DateTime givenUtc =
+        DateTime.fromMillisecondsSinceEpoch(sp.getInt("sub") ?? 0, isUtc: true);
+
+    if (givenUtc.isAfter(currentUtc)) {
+      hassub = true;
+    }
+    setState(() {});
+  }
+
+  bool iads = true;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _loadAd();
-    _createInterstitialAd();
+
+    _interstitialAdx = LevelPlayInterstitialAd(adUnitId: "qslh0eeklqwctffp");
+    _interstitialAdx!.setListener(this);
+
+    // setState(() {
+    //   Random random = Random();
+    //   iads = random.nextBool();
+    // });
+
+    //showads
+    // IronSource.setLevelPlayInterstitialListener(this);
+    checksub();
     featchdata();
+
+    // iads ? "" : _loadAd();
+
+    // iads ? IronSource.loadInterstitial() ;
+
     WakelockPlus.enable();
   }
 
@@ -627,6 +1065,8 @@ class VideoXX extends State<VideoX> {
 
   bool progrs = false;
   bool progrsx = false;
+  bool playtrailer = false;
+
   bool progrsxx = false;
 
   Future<void> sendvlog() async {
@@ -641,37 +1081,33 @@ class VideoXX extends State<VideoX> {
 
   @override
   Widget build(BuildContext context) {
-    final fpx = MediaQuery.of(context).size.height;
-    final fpw = MediaQuery.of(context).size.width;
     double screenSize = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      bottomNavigationBar: Container(
-        width: fpw,
-        height: widget.adSize.height.toDouble(),
-        child: _bannerAd == null
-            // Nothing to render yet.
-            ? SizedBox()
-            // The actual ad.
-            : Center(child: AdWidget(ad: _bannerAd!)),
-      ),
+      //showads
+      // bottomNavigationBar: SizedBox(
+      //   height: iads ? 80 : widget.adSize.height.toDouble(),
+      //   //showads
+      //   child: iads
+      //       ? IronsourceBanner()
+      //       : _bannerAd == null
+      //           // Nothing to render yet.
+      //           ? SizedBox()
+      //           // The actual ad.
+      //           : Center(child: AdWidget(ad: _bannerAd!)),
+      // ),
+
       appBar: AppBar(
         toolbarHeight: 80,
         backgroundColor: Colors.transparent,
         centerTitle: false,
         actions: [
-          Icon(
-            Icons.emoji_events,
-            color: Colors.white,
-            size: 40,
-          ),
           MenuAnchor(
             menuChildren: [
               MenuItemButton(
                   onPressed: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                      updateserverx();
                       return MySignUp();
                     }));
                   },
@@ -680,7 +1116,6 @@ class VideoXX extends State<VideoX> {
                   onPressed: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                      updateserverx();
                       return DownloadedPage();
                     }));
                   },
@@ -689,7 +1124,6 @@ class VideoXX extends State<VideoX> {
                   onPressed: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                      updateserverx();
                       return Vatchlist();
                     }));
                   },
@@ -706,15 +1140,28 @@ class VideoXX extends State<VideoX> {
               icon: Icon(
                 Icons.person,
                 color: Colors.white,
-                size: 40,
+                size: 30,
               ),
             ),
           )
         ],
+        // bottom: PreferredSize(
+        //     preferredSize: Size.fromHeight(1),
+        //     child: Container(
+        //       child: Text(
+        //         "xxx$waitforinits xxx",
+        //         style: TextStyle(color: Colors.white),
+        //       ),
+        //       // color: Colors.white,
+        //       height: 50,
+        //     )),
         foregroundColor: Colors.white,
-        title: Image.asset(
-          "assets/logo.png",
-          height: 50,
+        titleSpacing: 0,
+        title: Center(
+          child: Image.asset(
+            "assets/logo.png",
+            height: 40,
+          ),
         ),
       ),
       body: !xtg
@@ -723,120 +1170,106 @@ class VideoXX extends State<VideoX> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Stack(
-                        children: [
-                          playp
-                              ? GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
-                                  onTapDown: (details) =>
-                                      _tapPosition = details.globalPosition,
-                                  onDoubleTap: () {
-                                    final screenWidth =
-                                        MediaQuery.of(context).size.width;
-                                    final middle = screenWidth / 2;
-                                    if (_tapPosition.dx < middle &&
-                                        adstype == 0) {
-                                      print("Left");
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Stack(
+                      children: [
+                        playtrailer
+                            ? BetterPlayer(controller: _controllerxtrailer!)
+                            : playp
+                                ? (_controllerx != null ||
+                                        _controllerxads != null)
+                                    ? BetterPlayer(
+                                        controller: adstype == 2
+                                            ? _controllerxads!
+                                            : _controllerx!)
+                                    : SizedBox()
+                                : Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      FadeInImage.assetNetwork(
+                                          placeholder: "assets/logo.png",
+                                          fit: BoxFit.cover,
+                                          image: "${imgUrl + data["BNR"]}"),
+                                      Center(
+                                          child: waitforinits
+                                              ? Image.asset(
+                                                  "assets/loader.gif",
+                                                  height: 100,
+                                                  width: 100,
+                                                )
+                                              : InkWell(
+                                                  onTap: () {
+                                                    if (!canplay) {
+                                                      showaler();
+                                                      return;
+                                                    }
 
-                                      final currentPosition = _controllerx
-                                          ?.videoPlayerController
-                                          .value
-                                          .position;
-                                      _controllerx?.seekTo(Duration(
-                                          seconds:
-                                              currentPosition!.inSeconds - 5));
-                                    } else if (adstype == 0) {
-                                      print("Right");
-                                      final currentPosition = _controllerx
-                                          ?.videoPlayerController
-                                          .value
-                                          .position;
-                                      _controllerx?.seekTo(Duration(
-                                          seconds:
-                                              currentPosition!.inSeconds + 5));
-                                    }
-                                  },
-                                  child: Chewie(
-                                      controller: adstype == 2
-                                          ? _controllerxads!
-                                          : _controllerx!),
-                                )
-                              : Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    FadeInImage.assetNetwork(
-                                        placeholder: "assets/logo.png",
-                                        fit: BoxFit.cover,
-                                        image: "${imgUrl + data["BNR"]}"),
-                                    Center(
-                                        child: InkWell(
-                                      onTap: () {
-                                        print(data);
+                                                    switch (adstype) {
+                                                      case 0:
+                                                        {
+                                                          playp = true;
+                                                          _controllerx?.play();
+                                                        }
+                                                      case 1:
+                                                        {
+                                                          showxxad();
+                                                        }
+                                                      case 2:
+                                                        {
+                                                          func();
+                                                          _controllerxads
+                                                              ?.play();
+                                                        }
 
-                                        if (adstype == 2) {
-                                          func();
-                                        }
+                                                        break;
+                                                      default:
+                                                        {}
+                                                    }
+                                                    setState(() {});
+                                                  },
+                                                  child: Image.asset(
+                                                    "assets/rtzx.gif",
+                                                    height: 100,
+                                                    width: 100,
+                                                  ),
+                                                )),
+                                      Center(
+                                          child: Icon(
+                                        Icons.play_circle_fill,
+                                        fill: 0,
+                                        color:
+                                            Color.fromARGB(255, 255, 255, 255),
+                                        size: 15,
+                                      )),
+                                    ],
+                                  ),
+                        Visibility(
+                          visible: playp && skiped && adstype == 2,
+                          child: Align(
+                            alignment: Alignment(.8, .9),
+                            child: ElevatedButton(
+                                onPressed: () {
+                                  if (Changetx == 0) {
+                                    setState(() {
+                                      skiped = false;
+                                      adstype = 0;
+                                    });
 
-                                        setState(() {
-                                          adstype == 2
-                                              ? _controllerxads!.play()
-                                              : adstype == 0
-                                                  ? _controllerx!.play()
-                                                  : "";
+                                    updateserverx(typ: 3, extra: adsids);
 
-                                          // _controllerx?.play();
-                                          playp = true;
-                                        });
+                                    updateserverx(typ: 1, extra: adsids);
 
-                                        if (adstype == 1) {
-                                          _showInterstitialAd();
-                                        }
-                                      },
-                                      child: Image.asset(
-                                        "assets/rtzx.gif",
-                                        height: 100,
-                                        width: 100,
-                                      ),
-                                    )),
-                                    Center(
-                                        child: Icon(
-                                      Icons.play_circle_fill,
-                                      fill: 0,
-                                      color: Color.fromARGB(255, 255, 255, 255),
-                                      size: 15,
-                                    )),
-                                  ],
-                                ),
-                          Visibility(
-                            visible: playp && skiped && adstype == 2,
-                            child: Align(
-                              alignment: Alignment(.8, .9),
-                              child: ElevatedButton(
-                                  onPressed: () {
-                                    if (Changetx == 0) {
-                                      setState(() {
-                                        skiped = false;
-                                        adstype = 0;
-                                      });
-
-                                      updateads();
-                                      updateserverx(isstart: true);
-                                      _controllerxads?.pause();
-                                      _controllerxads?.videoPlayerController
-                                          .dispose();
-                                      _controllerxads?.dispose();
-                                      _controllerx?.play();
-                                    }
-                                  },
-                                  child: Text(
-                                      "Skip ${Changetx != 0 ? "in $Changetx s" : ""}")),
-                            ),
-                          )
-                        ],
-                      ),
+                                    _controllerxads?.dispose(
+                                        forceDispose: true);
+                                    _controllerx?.play();
+                                  }
+                                },
+                                child: Text(
+                                    "Skip ${Changetx != 0 ? "in $Changetx s" : ""}")),
+                          ),
+                        )
+                      ],
                     ),
                   ),
                   // SizedBox(
@@ -913,32 +1346,42 @@ class VideoXX extends State<VideoX> {
                                 children: [
                                   FilledButton.icon(
                                       icon: Icon(Icons.play_arrow),
-                                      onPressed: () {
-                                        if (adstype == 2) {
-                                          func();
+                                      onPressed: () async {
+                                        // _controllerx?.play();
+
+                                        if (!canplay) {
+                                          showaler();
+                                          return;
                                         }
 
-                                        setState(() {
-                                          if (adstype == 2) {
-                                            _controllerxads!.play();
-                                          } else if (adstype == 0) {
-                                            updateserverx(isstart: true);
-                                            _controllerx!.play();
-                                          }
+                                        switch (adstype) {
+                                          case 0:
+                                            {
+                                              playp = true;
+                                              _controllerx?.play();
+                                            }
+                                          case 1:
+                                            {
+                                              showxxad();
+                                            }
+                                          case 2:
+                                            {
+                                              func();
+                                              _controllerxads?.play();
+                                            }
 
-                                          // _controllerx?.play();
-                                          playp = true;
-                                        });
-
-                                        if (adstype == 1) {
-                                          _showInterstitialAd();
+                                            break;
+                                          default:
+                                            {}
                                         }
+                                        setState(() {});
                                       },
                                       style: ButtonStyle(
                                           backgroundColor:
-                                              MaterialStateProperty.all(Color
-                                                  .fromARGB(255, 230, 6, 6)),
-                                          shape: MaterialStateProperty.all<
+                                              WidgetStateProperty.all(
+                                                  Color.fromARGB(
+                                                      255, 230, 6, 6)),
+                                          shape: WidgetStateProperty.all<
                                                   RoundedRectangleBorder>(
                                               RoundedRectangleBorder(
                                                   borderRadius:
@@ -947,7 +1390,11 @@ class VideoXX extends State<VideoX> {
                                                       width: 1,
                                                       color: Colors.white)))),
                                       label: Text(
-                                        "Play",
+                                        canplay
+                                            ? "Play"
+                                            : canbuy
+                                                ? "Rent ₹${data["price"]}"
+                                                : "Subscribe",
                                       )),
                                   SizedBox(
                                     width: 8,
@@ -958,8 +1405,19 @@ class VideoXX extends State<VideoX> {
                                           width: 10,
                                         )
                                       : FilledButton.icon(
-                                          icon: Icon(Icons.play_arrow),
+                                          icon: Icon(playtrailer
+                                              ? Icons.stop_circle
+                                              : Icons.play_arrow),
                                           onPressed: () async {
+                                            if (playtrailer) {
+                                              setState(() {
+                                                playtrailer = false;
+                                              });
+                                              _controllerxtrailer?.dispose();
+
+                                              return;
+                                            }
+
                                             setState(() {
                                               progrsx = true;
                                             });
@@ -976,78 +1434,59 @@ class VideoXX extends State<VideoX> {
                                             );
 
                                             final hls = jsonDecode(tyh.body);
+                                            setState(() {
+                                              progrsx = false;
+                                            });
 
                                             if (hls["hls"] == null) {
                                               print("object");
 
-                                              setState(() {
-                                                progrsx = false;
-                                              });
+                                              await showDialog(
+                                                  context: context,
+                                                  builder: (ctx) => AlertDialog(
+                                                        content: Text(
+                                                            "Server Error"),
+                                                      ));
 
                                               return;
                                             }
 
-                                            if (_controllerxtrailer == null) {
-                                              final _controller =
-                                                  VideoPlayerController
-                                                      .networkUrl(
-                                                Uri.parse(hls["hls"]),
-                                                // Uri.parse("http://localhost:3000/uploads/x.mp4"),
-                                              );
-                                              await _controller.initialize();
+                                            final BetterPlayerDataSource
+                                                initialDataSourcetrail =
+                                                BetterPlayerDataSource(
+                                              BetterPlayerDataSourceType
+                                                  .network,
+                                              hls["hls"],
+                                            );
 
-                                              _controllerxtrailer =
-                                                  ChewieController(
-                                                      videoPlayerController:
-                                                          _controller,
-                                                      aspectRatio: _controller
-                                                          .value.aspectRatio,
-                                                      looping: true,
-                                                      autoPlay: true);
-                                            }
+                                            _controllerxtrailer =
+                                                BetterPlayerController(
+                                              BetterPlayerConfiguration(
+                                                  allowedScreenSleep: false),
+                                              betterPlayerDataSource:
+                                                  initialDataSourcetrail,
+                                            );
+
                                             // setState(() {});
 
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                return Stack(
-                                                  children: [
-                                                    Container(
-                                                      color: const Color(
-                                                          0xff071427),
-                                                    ),
-                                                    Chewie(
-                                                        controller:
-                                                            _controllerxtrailer!),
-                                                    IconButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            progrsx = false;
-                                                          });
-                                                          _controllerxtrailer
-                                                              ?.pause();
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        icon: Icon(
-                                                          Icons.close,
-                                                          color: Colors.white,
-                                                          size: 40,
-                                                        ))
-                                                  ],
-                                                );
-                                              },
-                                            );
+                                            setState(() {
+                                              playtrailer = true;
+                                              progrsx = false;
+                                            });
+
+                                            _controllerxtrailer?.play();
+                                            // ;
                                           },
                                           style: ButtonStyle(
-                                              padding: MaterialStateProperty.all(
+                                              padding: WidgetStateProperty.all(
                                                   EdgeInsets.only(
                                                       right: 20, left: 8)),
                                               backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Color.fromARGB(
+                                                  WidgetStateProperty.all(playtrailer
+                                                      ? Colors.red
+                                                      : Color.fromARGB(
                                                           255, 6, 14, 171)),
-                                              shape: MaterialStateProperty.all<
+                                              shape: WidgetStateProperty.all<
                                                       RoundedRectangleBorder>(
                                                   RoundedRectangleBorder(
                                                       borderRadius: BorderRadius.circular(8),
@@ -1096,124 +1535,150 @@ class VideoXX extends State<VideoX> {
                                         Icons.edit_note,
                                         color: Colors.white,
                                       )),
-                                  MenuAnchor(
-                                    builder: (context, controller, child) =>
-                                        IconButton(
-                                            onPressed: () {
-                                              if (controller.isOpen) {
-                                                controller.close();
-                                              } else {
-                                                controller.open();
-                                              }
-                                              //
-                                            },
-                                            icon: Icon(
-                                              Icons.file_download,
-                                              color: Colors.white,
-                                            )),
-                                    menuChildren: [
-                                      MenuItemButton(
-                                        onPressed: () {
-                                          getHLSVideoUrls(data);
-                                        },
-                                        child: Text("Download"),
-                                      ),
-                                      MenuItemButton(
-                                        onPressed: () async {
-                                          SharedPreferences sp =
-                                              await SharedPreferences
-                                                  .getInstance();
+                                  data["typex"].contains("Paid")
+                                      ? SizedBox()
+                                      : MenuAnchor(
+                                          builder:
+                                              (context, controller, child) =>
+                                                  IconButton(
+                                                      onPressed: () {
+                                                        if (controller.isOpen) {
+                                                          controller.close();
+                                                        } else {
+                                                          controller.open();
+                                                        }
+                                                        //
+                                                      },
+                                                      icon: Icon(
+                                                        Icons.file_download,
+                                                        color: Colors.white,
+                                                      )),
+                                          menuChildren: [
+                                            MenuItemButton(
+                                              onPressed: () {
+                                                if (!canplay) {
+                                                  showaler();
+                                                  return;
+                                                }
+                                                getHLSVideoUrls(data);
+                                              },
+                                              child: Text("Download"),
+                                            ),
+                                            MenuItemButton(
+                                              onPressed: () async {
+                                                SharedPreferences sp =
+                                                    await SharedPreferences
+                                                        .getInstance();
 
-                                          final jo =
-                                              sp.getStringList("watch") ?? [];
+                                                final jo =
+                                                    sp.getStringList("watch") ??
+                                                        [];
 
-                                          if (jo.contains(data["_id"])) {
-                                            await showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: Text("Already Exists"),
-                                                content: Text(
-                                                    "File is Alredy in Your Watch List"),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                            builder: (context) {
-                                                              updateserverx();
-                                                              return Vatchlist();
-                                                            },
-                                                          )),
-                                                      child: Text(
-                                                          "goto WatchList")),
-                                                  TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context),
-                                                      child: Text("Close"))
-                                                ],
-                                              ),
-                                            );
+                                                if (jo.contains(data["_id"])) {
+                                                  await showDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        AlertDialog(
+                                                      title: Text(
+                                                          "Already Exists"),
+                                                      content: Text(
+                                                          "File is Alredy in Your Watch List"),
+                                                      actions: [
+                                                        TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) {
+                                                                    return Vatchlist();
+                                                                  },
+                                                                )),
+                                                            child: Text(
+                                                                "goto WatchList")),
+                                                        TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                    context),
+                                                            child:
+                                                                Text("Close"))
+                                                      ],
+                                                    ),
+                                                  );
 
-                                            return;
-                                          }
+                                                  return;
+                                                }
 
-                                          await sp.setString(
-                                              data["_id"], jsonEncode(data));
+                                                await sp.setString(data["_id"],
+                                                    jsonEncode(data));
 
-                                          final op =
-                                              sp.getStringList("watch") ?? [];
+                                                final op =
+                                                    sp.getStringList("watch") ??
+                                                        [];
 
-                                          op.add(data["_id"]);
+                                                op.add(data["_id"]);
 
-                                          await sp.setStringList("watch", op);
+                                                await sp.setStringList(
+                                                    "watch", op);
 
-                                          showDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                return AlertDialog(
-                                                  title: Text(
-                                                    "Done",
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                  actionsAlignment:
-                                                      MainAxisAlignment.center,
-                                                  content: Text(
-                                                      "Added to Watch Later List",
-                                                      textAlign:
-                                                          TextAlign.center),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                              context);
+                                                showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      return AlertDialog(
+                                                        title: Text(
+                                                          "Done",
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                        ),
+                                                        actionsAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        content: Text(
+                                                            "Added to Watch Later List",
+                                                            textAlign: TextAlign
+                                                                .center),
+                                                        actions: [
+                                                          TextButton(
+                                                              onPressed: () {
+                                                                Navigator.pop(
+                                                                    context);
 
-                                                          Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                            builder: (context) {
-                                                              updateserverx();
-                                                              return Vatchlist();
-                                                            },
-                                                          ));
-                                                          return;
-                                                        },
-                                                        child: Text("Close"))
-                                                  ],
-                                                );
-                                              });
-                                        },
-                                        child: Text("Watch Later"),
-                                      )
-                                    ],
-                                  )
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) {
+                                                                    return Vatchlist();
+                                                                  },
+                                                                ));
+                                                                return;
+                                                              },
+                                                              child:
+                                                                  Text("Close"))
+                                                        ],
+                                                      );
+                                                    });
+                                              },
+                                              child: Text("Watch Later"),
+                                            )
+                                          ],
+                                        )
                                 ],
                               ),
                             ],
                           ),
-                          SizedBox(
-                            height: 10,
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child:
+                                // GoogleNative()
+
+                                Random().nextBool()
+                                    ? IronsourceNative(
+                                        issall: Random().nextBool(),
+                                      )
+                                    : GoogleNative(
+                                        isssmall: Random().nextBool(),
+                                      ),
                           ),
                           Text("Story",
                               style: TextStyle(
@@ -1279,6 +1744,14 @@ class VideoXX extends State<VideoX> {
                           SizedBox(
                             height: 10,
                           ),
+
+                          // Padding(
+                          //   padding: const EdgeInsets.only(bottom: 8.0),
+                          //   child: IronsourceNative(
+                          //     key: GlobalKey(),
+                          //     issall: false,
+                          //   ),
+                          // ),
                           // Container(
                           //   padding: EdgeInsets.symmetric(horizontal: 5),
                           //   child: Column(
@@ -1363,8 +1836,6 @@ class VideoXX extends State<VideoX> {
                                                     Navigator.push(context,
                                                         MaterialPageRoute(
                                                             builder: (context) {
-                                                      updateserverx();
-
                                                       return VideoX(
                                                           idx:
                                                               "${serrios[indexx]["DATA"][indexzz]["_id"]}");
@@ -1414,18 +1885,168 @@ class VideoXX extends State<VideoX> {
 
   @override
   void dispose() {
+    updateserverx(typ: 2);
     WakelockPlus.disable();
 
-    print("my jurny\n\n end");
-    _controllerx?.videoPlayerController.dispose();
-    _controllerx?.dispose();
+    //
+    print("raju\n\n im deathxxxxxxx-->");
 
-    _controllerxads?.videoPlayerController.dispose();
-    _controllerxads?.dispose();
+    _timer?.cancel();
 
-    _controllerxtrailer?.videoPlayerController.dispose();
-    _controllerxtrailer?.dispose();
+    _controllerx?.dispose(forceDispose: true);
+
+    _controllerxads?.dispose(forceDispose: true);
+
+    _controllerxtrailer?.dispose(forceDispose: true);
 
     super.dispose();
+  }
+
+  /*
+
+  @override
+  void onAdClicked(IronSourceAdInfo adInfo) {
+    print("raju\n\n im-->${mounted.toString()}<-- ads---onAdClicked-->$adInfo");
+  }
+
+  @override
+  void onAdClosed(IronSourceAdInfo adInfo) {
+    // print("raju\n\n im ads---onAdClosed-->$adInfo");
+    // if (_controllerx != null) {
+    //   print("raju help$_controllerx me im not null\n\n");
+    // } else {
+    //   print(" me im not null$_controllerx\n\n");
+
+    //   print(data);
+    // }
+    print("raju  now inside _controllerrtx");
+
+    // _controllerrtx?.initialize().then((xgi) {
+    //   print("raju  now inside _controllerrtx");
+    //   _controllerx = ChewieController(
+    //       videoPlayerController: _controllerrtx!,
+    //       looping: true,
+    //       autoPlay: true,
+    //       customControls: CupertinoControls(
+    //         backgroundColor: Colors.black12,
+    //         iconColor: Colors.white,
+    //       ));
+    _controllerx?.play();
+
+    // myideo = Chewie(controller: _controllerx!);
+
+    setState(() {
+      rdeatc = true;
+    });
+
+    updateserverx(typ: 1);
+
+    // TODO: implement onAdClosed
+  }
+
+  @override
+  void onAdLoadFailed(IronSourceError error) {
+    print("raju\n\n im ads---onAdLoadFailed-->$error");
+
+    // TODO: implement
+
+    setState(() {
+      adstype = 0;
+    });
+    _controllerx?.play();
+    updateserverx(typ: 1);
+  }
+
+  @override
+  void onAdOpened(IronSourceAdInfo adInfo) {
+    print("raju\n\n im ads---onAdOpened-->$adInfo");
+
+    // TODO: implement onAdOpened
+  }
+
+  @override
+  void onAdReady(IronSourceAdInfo adInfo) {
+    print("raju\n\n im ads---onAdReady-->$adInfo");
+
+    // TODO: implement onAdReady
+  }
+
+  @override
+  void onAdShowFailed(IronSourceError error, IronSourceAdInfo adInfo) {
+    print("raju\n\n im ads---onAdS${mounted.toString()}-->$adInfo--->$error");
+
+    setState(() {
+      adstype = 0;
+    });
+    _controllerx?.play();
+
+    // TODO: implement onAdShowFailed
+  }
+
+  @override
+  void onAdShowSucceeded(IronSourceAdInfo adInfo) {
+    print("raju\n\n im ads---onAdSho${mounted.toString()}wSucceeded-->$adInfo");
+
+    // TODO: implement onAdShowSucceeded
+  }
+
+
+*/
+
+  void hiderent() {
+    setState(() {
+      opx = true;
+    });
+  }
+
+  @override
+  void onAdClicked(LevelPlayAdInfo adInfo) {
+    // TODO: implement onAdClicked
+  }
+
+  @override
+  void onAdClosed(LevelPlayAdInfo adInfo) {
+    setState(() {
+      playp = true;
+      adstype = 0;
+      waitforinits = false;
+    });
+
+    _controllerx?.play();
+
+    // TODO: implement onAdClosed
+  }
+
+  @override
+  void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
+    // TODO: implement onAdDisplayFailed
+  }
+
+  @override
+  void onAdDisplayed(LevelPlayAdInfo adInfo) {
+    // TODO: implement onAdDisplayed
+  }
+
+  @override
+  void onAdInfoChanged(LevelPlayAdInfo adInfo) {
+    // TODO: implement onAdInfoChanged
+  }
+
+  @override
+  void onAdLoadFailed(LevelPlayAdError error) {
+    setState(() {
+      playp = true;
+      adstype = 0;
+      waitforinits = false;
+    });
+
+    _controllerx?.play();
+    // TODO: implement onAdLoadFailed
+  }
+
+  @override
+  void onAdLoaded(LevelPlayAdInfo adInfo) {
+    _interstitialAdx?.showAd();
+    // TODO: implement onAdLoaded
   }
 }
